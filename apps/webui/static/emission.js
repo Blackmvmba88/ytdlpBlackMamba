@@ -25,6 +25,7 @@ const extFloat=gl.getExtension('EXT_color_buffer_float');
     vec2 uv=vUv;
     vec3 col=vec3(.013,.010,.030);
     float energy=dot(uBands,vec4(.25));
+    energy=energy/(.72+energy);
     // Broad drifting ribbons: light surrounds the content rather than becoming a control.
     for(int i=0;i<3;i++){
       float fi=float(i);
@@ -38,19 +39,20 @@ const extFloat=gl.getExtension('EXT_color_buffer_float');
     float slot=clamp(floor(uv.x*48.),0.,47.);
     int idx=int(slot);
     float level=uSpectrum[idx];
-    float height=.022+level*.24;
+    float compressed=level/(.62+level);
+    float height=.018+compressed*.16;
     float x=abs(fract(uv.x*48.)-.5);
     float width=1.-smoothstep(.20,.38,x);
     float baseline=.13;
     float bar=step(baseline,uv.y)*(1.-smoothstep(height,height+.005,uv.y-baseline))*width;
     float segments=.45+.55*smoothstep(.12,.22,fract((uv.y-baseline)*105.));
     vec3 tint=palette(uv.x*1.6);
-    col+=tint*bar*segments*(.25+level*.9);
+    col+=tint*bar*segments*(.16+compressed*.48);
     float glow=exp(-pow((uv.y-baseline-height*.5)/(.03+height*.65),2.));
-    col+=tint*glow*(.025+level*.06);
+    col+=tint*glow*(.014+compressed*.035);
     float reflected=step(uv.y,baseline)*exp(-(baseline-uv.y)*28.)*width*step(baseline-uv.y,height*.5);
-    col+=tint*reflected*level*.14;
-    col+=palette(uv.x)*exp(-abs(uv.y-baseline)*350.)*.10;
+    col+=tint*reflected*compressed*.08;
+    col+=palette(uv.x)*exp(-abs(uv.y-baseline)*350.)*.055;
     outColor=vec4(col,1.);
   }`;
 
@@ -183,7 +185,7 @@ player?.addEventListener('play',async()=>{
 });
 player?.addEventListener('pause',updateStatus);
 if(!navigator.mediaDevices?.getUserMedia){micButton.disabled=true;micMessage.textContent='Este navegador no permite acceder al micrófono aquí.';}
-micButton.addEventListener('click',async()=>{
+async function startMic(){
  if(micPending)return;
  if(micStream){stopMic();micMessage.textContent='Micrófono apagado.';return;}
  micPending=true;micButton.disabled=true;micMessage.textContent='Autoriza el micrófono en el aviso del navegador.';
@@ -201,9 +203,14 @@ micButton.addEventListener('click',async()=>{
   stopMic();
   micMessage.textContent=error.name==='NotAllowedError'?'Permiso denegado. Habilita el micrófono en los permisos del navegador y vuelve a intentar.':error.name==='NotFoundError'?'No se encontró un micrófono conectado.':'No se pudo abrir el micrófono. Revisa que esté disponible y vuelve a intentar.';
  }finally{micPending=false;micButton.disabled=false;}
-});
+}
+micButton.addEventListener('click',()=>{ if(micStream) stopMic(); else startMic(); });
 addEventListener('pagehide',()=>{leaving=true;stopMic();});
 addEventListener('pageshow',()=>{leaving=false;});
+// Preferred mode: ask once on startup. The browser may still require a permission gesture.
+if(!micButton.disabled && localStorage.getItem('mambaflow-mic') !== 'off'){
+  startMic();
+}
 let paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const toggle=document.querySelector('#visual-toggle');
 function label(){toggle.textContent=paused?'Activar movimiento':'Pausar movimiento';toggle.setAttribute('aria-pressed',String(!paused));}label();
