@@ -14,6 +14,6 @@
 
 ## Repositorio
 
-El código se mantiene dentro de XarvisCore. `packaging/export_source.py` genera un ZIP independiente con lista explícita de archivos; no incluye entornos, cookies, descargas, logs ni la copia anidada histórica. Incluye CI para pruebas y documentación. No se crea ni publica un repositorio remoto automáticamente.
+Repositorio local independiente en `~/MambaFlow`, rama `main`. La copia de origen permanece dentro de XarvisCore. `packaging/export_source.py` genera un ZIP independiente con lista explícita de archivos; no incluye entornos, cookies, descargas, logs ni la copia anidada histórica. Incluye CI para pruebas y documentación. No se crea ni publica un repositorio remoto automáticamente.
 
 No se han firmado, notarizado ni publicado releases en servicios externos.
