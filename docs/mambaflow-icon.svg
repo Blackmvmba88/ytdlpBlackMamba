@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">MambaFlow</title>
+  <desc id="desc">Emblema BlackMamba con serpiente, descarga y reproducción multimedia.</desc>
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00f59a"/>
+      <stop offset="0.52" stop-color="#ff2aa1"/>
+      <stop offset="1" stop-color="#ff3131"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#43484d"/>
+      <stop offset="0.48" stop-color="#111416"/>
+      <stop offset="1" stop-color="#050607"/>
+    </linearGradient>
+    <radialGradient id="eye" cx="50%" cy="50%" r="65%">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="0.16" stop-color="#ff8acb"/>
+      <stop offset="0.48" stop-color="#ff245f"/>
+      <stop offset="1" stop-color="#a80025"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="36" y="36" width="952" height="952" rx="190" fill="#050607"/>
+  <rect x="52" y="52" width="920" height="920" rx="174" fill="none" stroke="url(#rim)" stroke-width="10" opacity="0.9" filter="url(#soft)"/>
+  <circle cx="512" cy="510" r="350" fill="none" stroke="url(#rim)" stroke-width="18" opacity="0.45" filter="url(#soft)"/>
+
+  <!-- coiled mamba body -->
+  <path d="M236 548 C180 354 302 204 492 222 C646 236 714 316 748 402 C786 498 748 582 640 622 C542 658 370 628 306 688 C256 736 314 826 444 830 C600 836 784 792 816 658"
+        fill="none" stroke="#020303" stroke-width="156" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M236 548 C180 354 302 204 492 222 C646 236 714 316 748 402 C786 498 748 582 640 622 C542 658 370 628 306 688 C256 736 314 826 444 830 C600 836 784 792 816 658"
+        fill="none" stroke="url(#rim)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" filter="url(#soft)"/>
+  <path d="M230 538 C194 394 298 286 432 276" fill="none" stroke="#00f59a" stroke-width="5" opacity="0.65"/>
+  <path d="M450 228 C626 216 712 310 752 420" fill="none" stroke="#ff2aa1" stroke-width="5" opacity="0.7"/>
+  <path d="M445 830 C614 837 776 784 815 659" fill="none" stroke="#ff3131" stroke-width="5" opacity="0.7"/>
+
+  <!-- snake head -->
+  <path d="M694 250 C752 212 836 225 886 282 C907 306 896 345 866 360 C823 381 774 365 737 342 C706 323 678 286 694 250Z" fill="url(#metal)" stroke="url(#rim)" stroke-width="9"/>
+  <path d="M804 347 C835 363 874 376 902 364 C886 402 848 424 809 411 C782 402 763 381 752 355Z" fill="#100509" stroke="#ff315d" stroke-width="6"/>
+  <path d="M840 370 L855 418 L870 376" fill="#f7f7f7"/>
+  <path d="M790 357 L804 404 L820 365" fill="#f7f7f7"/>
+  <circle cx="820" cy="291" r="31" fill="url(#eye)" filter="url(#glow)"/>
+  <ellipse cx="820" cy="291" rx="6" ry="24" fill="#180006"/>
+  <path d="M884 398 C930 412 942 445 916 470 C925 442 911 423 884 419" fill="none" stroke="#ff2a86" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- download emblem -->
+  <path d="M444 324 H580 V525 H692 L512 704 L332 525 H444Z" fill="url(#metal)" stroke="#00f59a" stroke-width="10" filter="url(#soft)"/>
+  <path d="M346 716 V790 H678 V716" fill="none" stroke="url(#rim)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M488 472 L488 584 L584 528Z" fill="#00f5b5" stroke="#baffea" stroke-width="7" filter="url(#soft)"/>
+</svg>
