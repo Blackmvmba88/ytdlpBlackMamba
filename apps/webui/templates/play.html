@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2 class="card-title">Reproducción</h2>
+  <div class="label">Usando el reproductor global…</div>
+  <div class="actions" style="margin-top:10px;">
+    <a href="{{ file_url }}" download class="btn">Descargar</a>
+  </div>
+</section>
+<script>
+  (function(){
+    const url = {{ file_url|tojson }};
+    const name = {{ file_name|tojson }};
+    const kind = {{ '"video"' if is_video else '"audio"' }};
+    if (window.mambaPlay) window.mambaPlay(url, name, kind);
+  })();
+</script>
+{% endblock %}

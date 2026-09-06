@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Historial</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th><th>Modo</th><th>Estado</th><th>Mensaje</th><th>Salida</th><th>Creado</th><th>Finalizado</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in history %}
+    <tr>
+      <td>{{ item.id[:8] }}</td>
+      <td>{{ item.mode }}</td>
+      <td>{{ item.status }}</td>
+      <td>{{ item.message or "" }}</td>
+      <td>
+        {% if item.output_paths %}
+          <ul>
+            {% for p in item.output_paths %}
+              {% set rel = p.replace(download_root, '') %}
+              <li>
+{% set kind = 'video' if p.lower().endswith('.mp4') or p.lower().endswith('.mkv') or p.lower().endswith('.webm') or p.lower().endswith('.mov') else 'audio' %}
+                <a href="/play?rel={{ rel|urlencode }}" data-rel="{{ rel|urlencode }}" data-title="{{ p.split('/')[-1] }}" data-kind="{{ kind }}">▶ Reproducir</a> — {{ p }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </td>
+      <td>{{ item.created_at }}</td>
+      <td>{{ item.finished_at }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7">Aún no hay historial.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2 class="card-title">Videos</h2>
+  {% if items %}
+    <div class="gallery">
+      {% for it in items %}
+        <div class="vcard">
+          <div class="vthumb">
+<video data-src="{{ it.url }}#t=0.1" muted playsinline preload="none"></video>
+<script>
+  (function(){
+    const v = document.currentScript.previousElementSibling;
+    if (!v || v.tagName.toLowerCase()!== 'video') return;
+    const setSrc = ()=>{ if (!v.src) v.src = v.dataset.src; };
+    const clearSrc = ()=>{ if (document.body.classList.contains('perf')) { v.removeAttribute('src'); v.load(); } };
+    v.addEventListener('mouseenter', setSrc);
+    v.addEventListener('focus', setSrc);
+    v.addEventListener('mouseleave', clearSrc);
+    v.addEventListener('blur', clearSrc);
+  })();
+</script>
+            <div class="voverlay">
+<a class="btn primary" href="/play?rel={{ it.rel|urlencode }}" data-rel="{{ it.rel|urlencode }}" data-title="{{ it.name }}" data-kind="video">Reproducir</a>
+            </div>
+          </div>
+          <div class="vmeta">
+            <div class="vname" title="{{ it.name }}">{{ it.name }}</div>
+            <a class="btn" href="{{ it.url }}" download>Descargar</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="label">No se encontraron videos en descargas.</div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,5 @@
+/* Variant v2: oculta porcentaje, deja barra más ancha y refuerza acentos */
+.pct { display: none !important; }
+.bar { width: 220px !important; }
+.topbar-title { letter-spacing: .3px; }
+.brand { animation-duration: 7s !important; }

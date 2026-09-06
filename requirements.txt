@@ -1,0 +1,9 @@
+yt-dlp
+PyYAML
+rich
+pydantic>=2
+textual>=0.50.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.23.0
+Jinja2>=3.1.2
+python-multipart

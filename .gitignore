@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+build/
+dist/
+*.spec
+logs/
+downloads/
+config/cookies.txt
+.env
+blackmamba-ytdlp/

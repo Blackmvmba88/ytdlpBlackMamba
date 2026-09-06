@@ -1,0 +1,31 @@
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Modo</th>
+      <th>Estado</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in items %}
+    <tr>
+      <td>{{ item.finished_at or item.created_at }}</td>
+      <td>{{ item.mode }}</td>
+      <td>{{ item.status }}</td>
+      <td>
+        {% if item.output_paths and item.output_paths[0] %}
+          {% set p = item.output_paths[0] %}
+          {% set rel = p.replace('/Users/blackmamba/Projects/blackmamba-ytdlp/downloads/', '') %}
+          {% set kind = 'video' if p.lower().endswith('.mp4') or p.lower().endswith('.mkv') or p.lower().endswith('.webm') or p.lower().endswith('.mov') else 'audio' %}
+          <a href="/play?rel={{ rel }}" data-rel="{{ rel }}" data-title="{{ p.split('/')[-1] }}" data-kind="{{ kind }}">▶ Reproducir</a>
+        {% else %}
+          —
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="4">Sin historial aún.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

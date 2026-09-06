@@ -1,0 +1,14 @@
+download_root: null
+audio_dir: audio
+video_dir: video
+default_mode: video
+video_format: "bestvideo+bestaudio/best"
+merge_output_format: mp4
+audio_format: mp3
+audio_quality: 320k
+embed_thumbnail: false
+add_metadata: true
+write_subs: false
+concurrency: 2
+proxy: null
+cookies_path: null
