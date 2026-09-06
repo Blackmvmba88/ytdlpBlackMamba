@@ -46,4 +46,8 @@ Los archivos locales se reproducen en el navegador; no se suben. La búsqueda co
 
 ## Publicación
 
-Consulta [preparación de release](docs/RELEASE.md), [validación](docs/VALIDATION.md) y [arquitectura](docs/ARCHITECTURE.md). La copia anidada histórica `blackmamba-ytdlp/` no participa en la aplicación ni en el paquete de fuentes.
+Consulta el [roadmap](ROADMAP.md), la [preparación de release](docs/RELEASE.md), la [validación](docs/VALIDATION.md) y la [arquitectura](docs/ARCHITECTURE.md). La copia anidada histórica `blackmamba-ytdlp/` no participa en la aplicación ni en el paquete de fuentes.
+
+## Repositorio
+
+Este directorio es un repositorio Git local independiente, en la rama `main`. Tiene commits de la evolución de MambaFlow, pero todavía no tiene un remoto configurado. La copia de desarrollo dentro de XarvisCore conserva el remoto de GitHub del proyecto mayor.
