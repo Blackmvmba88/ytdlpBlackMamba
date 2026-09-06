@@ -8,6 +8,7 @@ import json
 
 from .jobs import Job, JobStatus, JobMode
 from .ytdlp_wrapper import Downloader
+from shared.library import identity, existing_media
 
 class DownloadManager:
     def __init__(self, config: Dict[str, Any], logger):
@@ -30,6 +31,21 @@ class DownloadManager:
         clean_urls = validate_urls(urls)
         job = Job(urls=clean_urls, mode=JobMode(mode), total_count=len(clean_urls))
         with self.lock:
+            self.jobs = {k: v for k, v in self.jobs.items() if v.status in (JobStatus.running, JobStatus.queued)} | dict(list(self.jobs.items())[-100:])
+            requested = {identity(url) for url in clean_urls}
+            for previous in self.jobs.values():
+                if previous.mode == job.mode and previous.status in (JobStatus.queued, JobStatus.running) and {identity(url) for url in previous.urls} == requested:
+                    return previous
+            overlap = any(previous.mode == job.mode and previous.status in (JobStatus.queued, JobStatus.running) and requested.intersection(identity(url) for url in previous.urls) for previous in self.jobs.values())
+            root = None if overlap else self.cfg.get("download_root")
+            paths = [existing_media(root, url, job.mode.value) for url in clean_urls] if root else []
+            if paths and all(paths):
+                job.output_paths = list(dict.fromkeys(paths))
+                job.status = JobStatus.completed
+                job.progress = 100
+                job.message = "Ya está en tu colección. Listo para reproducir."
+                self.jobs[job.id] = job
+                return job
             if len(self.pending) >= 100:
                 raise ValueError("La cola está llena; espera a que terminen las descargas.")
             self.jobs = {k: v for k, v in self.jobs.items() if v.status in (JobStatus.running, JobStatus.queued)} | dict(list(self.jobs.items())[-100:])

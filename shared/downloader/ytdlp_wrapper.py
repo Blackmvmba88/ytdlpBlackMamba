@@ -4,6 +4,34 @@ from pathlib import Path
 import yt_dlp
 from .jobs import Job, JobMode
 import threading
+from shared.library import existing_media, identity
+from contextlib import contextmanager
+
+_KEY_LOCK = threading.Lock()
+_KEY_LOCKS = {}
+
+@contextmanager
+def media_lock(key, cancel):
+    with _KEY_LOCK:
+        lock, users = _KEY_LOCKS.get(key, (threading.Lock(), 0))
+        _KEY_LOCKS[key] = (lock, users + 1)
+    acquired = False
+    try:
+        while not acquired:
+            if cancel.is_set():
+                raise yt_dlp.utils.DownloadError("Cancelado")
+            acquired = lock.acquire(timeout=.1)
+        yield
+    finally:
+        if acquired:
+            lock.release()
+        with _KEY_LOCK:
+            users = _KEY_LOCKS[key][1] - 1
+            if users:
+                _KEY_LOCKS[key] = (lock, users)
+            else:
+                del _KEY_LOCKS[key]
+
 
 class Downloader:
     def __init__(self, config: Dict[str, Any], logger):
@@ -97,17 +125,25 @@ class Downloader:
             if cancel_event.is_set():
                 break
             try:
-                self.logger.info(f"Iniciando descarga ({idx}/{len(job.urls)}): {url}")
-                info = ydl.extract_info(url, download=True)
-                if "requested_downloads" in info and info["requested_downloads"]:
-                    for rd in info["requested_downloads"]:
-                        fp = rd.get("filepath") or rd.get("_filename") or ydl.prepare_filename(rd)
+                with media_lock((str(Path(self.cfg['download_root']).resolve()), job.mode.value, identity(url)), cancel_event):
+                    cached = existing_media(self.cfg['download_root'], url, job.mode.value)
+                    if cached:
+                        results.append(cached)
+                        continue
+                    self.logger.info(f"Iniciando descarga ({idx}/{len(job.urls)}): {url}")
+                    info = ydl.extract_info(url, download=True)
+                    if "requested_downloads" in info and info["requested_downloads"]:
+                        for rd in info["requested_downloads"]:
+                            fp = rd.get("filepath") or rd.get("_filename") or ydl.prepare_filename(rd)
+                            if fp:
+                                results.append(str(fp))
+                    else:
+                        fp = info.get("filepath") or info.get("_filename") or ydl.prepare_filename(info)
                         if fp:
                             results.append(str(fp))
-                else:
-                    fp = info.get("filepath") or info.get("_filename") or ydl.prepare_filename(info)
-                    if fp:
-                        results.append(str(fp))
+                    final = existing_media(self.cfg['download_root'], url, job.mode.value)
+                    if final:
+                        results.append(final)
             except yt_dlp.utils.DownloadError as e:
                 self.logger.error(f"Error descargando {url}: {e}")
                 raise

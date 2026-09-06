@@ -29,10 +29,10 @@ Validado con Python 3.14 en macOS arm64. El archivo lock registra el entorno exa
 
 1. Escribe una canción o artista y pulsa Buscar.
 2. Elige MP3 o Video. La cola muestra progreso y permite cancelar.
-3. Abre Colección para escuchar audio guardado, o carga un archivo con Abrir audio.
+3. La colección de la pantalla principal se actualiza automáticamente al terminar. Pulsa Escuchar o Ver video. Los archivos existentes se reutilizan por ID y formato, incluso después de reiniciar.
 4. Pausa el movimiento cuando quieras. La preferencia del sistema de reducir movimiento se respeta al iniciar.
 
-Los archivos locales se reproducen en el navegador; no se suben. La búsqueda consulta YouTube; sus miniaturas pueden cargarse desde servidores de YouTube. No se solicita acceso al micrófono.
+Los archivos locales se reproducen en el navegador; no se suben. La búsqueda consulta YouTube; sus miniaturas pueden cargarse desde servidores de YouTube. El botón Activar micrófono solicita permiso al navegador. Su señal se analiza localmente, sin grabarla, subirla ni enviarla a los altavoces. Apagar micrófono detiene la captura.
 
 ## Límites de esta versión
 

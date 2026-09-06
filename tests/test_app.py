@@ -56,7 +56,7 @@ def test_search_escapes_and_errors(client, monkeypatch):
 
 def test_history_concurrent(tmp_path):
     manager=DownloadManager({'history_path':str(tmp_path/'history.json')},logging.getLogger('test'))
-    jobs=[manager.add_job(['https://youtu.be/test'],'audio') for _ in range(20)]
+    jobs=[manager.add_job([f'https://youtu.be/test{i}'],'audio') for i in range(20)]
     with ThreadPoolExecutor(4) as pool: list(pool.map(manager._persist_history_entry,jobs))
     assert len(json.loads(manager.history_path.read_text()))==20
     assert manager.cancel(jobs[0].id)
@@ -100,3 +100,40 @@ def test_search_cache(monkeypatch):
     monkeypatch.setattr(search.yt_dlp,'YoutubeDL',FakeDL)
     assert search.search_youtube('song')==search.search_youtube('song')
     assert len(calls)==1
+
+def test_completed_download_reused_after_restart(tmp_path):
+    root=tmp_path/'media';(root/'audio').mkdir(parents=True)
+    song=root/'audio'/'Song [abc123].mp3';song.write_bytes(b'audio')
+    cfg={'download_root':str(root),'history_path':str(tmp_path/'history.json')}
+    for url in ('https://youtu.be/abc123','https://www.youtube.com/watch?v=abc123&t=10','https://youtube.com/shorts/abc123'):
+        manager=DownloadManager(cfg,logging.getLogger('reuse'))
+        job=manager.add_job([url],'audio')
+        assert job.status==JobStatus.completed
+        assert job.output_paths==[str(song)]
+        assert manager.pending==[]
+    video=manager.add_job(['https://youtu.be/abc123'],'video')
+    assert video.status==JobStatus.queued
+    song.unlink()
+    again=manager.add_job(['https://youtu.be/abc123'],'audio')
+    assert again.status==JobStatus.queued
+
+def test_duplicate_pending_is_one_job(tmp_path):
+    manager=DownloadManager({'history_path':str(tmp_path/'history.json')},logging.getLogger('dedup'))
+    first=manager.add_job(['https://youtu.be/abc123'],'audio')
+    second=manager.add_job(['https://www.youtube.com/watch?v=abc123'],'audio')
+    assert first.id==second.id
+    assert len(manager.pending)==1
+
+def test_collection_includes_audio_video_and_excludes_partial(client,tmp_path):
+    root=tmp_path/'downloads'
+    for mode,name in [('audio','Song [abc].mp3'),('video','Film [xyz].mp4')]:
+        (root/mode).mkdir(exist_ok=True)
+        (root/mode/name).write_bytes(b'finished')
+    (root/'video'/'unfinished.mp4.part').write_bytes(b'partial')
+    response=client.get('/collection')
+    assert 'Escuchar' in response.text and 'Ver video' in response.text
+    assert 'unfinished' not in response.text
+    assert client.get('/media/audio/Song%20%5Babc%5D.mp3').content==b'finished'
+    reused=client.post('/jobs',data={'urls':'https://youtu.be/abc','mode':'audio'},headers={'Accept':'application/json'})
+    assert reused.json()['status']=='completed'
+    assert 'Ya está' in reused.json()['message']

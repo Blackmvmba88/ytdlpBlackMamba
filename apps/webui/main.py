@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from shared.security import contained_file
 from shared.search import search_youtube
+from shared.library import media_items, video_id
 
 from shared import get_manager, load_config
 
@@ -60,13 +61,15 @@ async def index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request, "jobs": manager.list_jobs()})
 
 @app.post("/jobs")
-async def create_job(urls: str = Form(...), mode: str = Form("video")):
+async def create_job(request: Request, urls: str = Form(...), mode: str = Form("video")):
     manager = get_manager()
     url_list = [u.strip() for u in urls.replace("\r\n"," ").replace("\n"," ").split(" ") if u.strip()]
     try:
-        manager.add_job(url_list, mode)
+        job = manager.add_job(url_list, mode)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+    if "application/json" in request.headers.get("accept", ""):
+        return {"id": job.id, "status": job.status.value, "message": job.message or "Añadido a la cola."}
     return RedirectResponse("/", status_code=303)
 
 @app.get("/jobs", response_class=HTMLResponse)
@@ -268,3 +271,10 @@ def library(request: Request):
             items.append({"name": path.stem, "rel": rel, "url": "/media/" + quote(rel), "mtime": path.stat().st_mtime})
     items.sort(key=lambda item: item["mtime"], reverse=True)
     return templates.TemplateResponse(request=request, name="library.html", context={"items": items})
+
+@app.get("/collection", response_class=HTMLResponse)
+def collection_partial(request: Request):
+    manager = get_manager()
+    busy = {(job.mode.value, video_id(url)) for job in manager.list_jobs() if job.status.value in ("queued", "running") for url in job.urls}
+    items = [item for item in media_items(load_config()["download_root"]) if (item["mode"], item["video_id"]) not in busy]
+    return templates.TemplateResponse(request=request, name="collection.html", context={"items": items})

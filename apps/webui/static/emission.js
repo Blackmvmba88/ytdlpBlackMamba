@@ -1,7 +1,7 @@
 (() => {
 const canvas=document.querySelector('#emission');if(!canvas)return;
 const gl=canvas.getContext('webgl2',{antialias:false,alpha:false});
-if(!gl){canvas.hidden=true;return;}
+if(!gl){canvas.hidden=true;document.querySelector("#mic-toggle").disabled=true;document.querySelector("#mic-message").textContent="El visualizador requiere WebGL para reaccionar al micrófono.";return;}
 const extFloat=gl.getExtension('EXT_color_buffer_float');
   const vs=`#version 300 es
   precision highp float;
@@ -155,27 +155,70 @@ const extFloat=gl.getExtension('EXT_color_buffer_float');
 
 
 const player=document.querySelector('#collection-player');
-let audioCtx,analyser,data,source;
+let audioCtx,analyser,source,micAnalyser,micSource,micStream;
+const data=new Uint8Array(512);
+const micButton=document.querySelector('#mic-toggle');
+const micMessage=document.querySelector('#mic-message');
+let micPending=false,leaving=false;
+async function ensureAudio(){
+  if(!audioCtx)audioCtx=new AudioContext();
+  if(audioCtx.state==='suspended')await audioCtx.resume();
+}
+function updateStatus(){
+ document.querySelector('#visual-status').textContent=micStream?'Vúmetro · micrófono en vivo':analyser&&player&&!player.paused?'Vúmetro · siguiendo tu música':'Ambiente · sin audio';
+}
+function stopMic(){
+ const stream=micStream;micStream=null;
+ if(micSource){micSource.disconnect();micSource=null;}
+ if(micAnalyser){micAnalyser.disconnect();micAnalyser=null;}
+ if(stream)stream.getTracks().forEach(track=>track.stop());
+ micButton.textContent='Activar micrófono';micButton.setAttribute('aria-pressed','false');updateStatus();
+}
 player?.addEventListener('play',async()=>{
-  try{
-    if(!audioCtx){audioCtx=new AudioContext();analyser=audioCtx.createAnalyser();analyser.fftSize=1024;data=new Uint8Array(analyser.frequencyBinCount);source=audioCtx.createMediaElementSource(player);source.connect(analyser);analyser.connect(audioCtx.destination);}
-    await audioCtx.resume();
-  }catch{document.querySelector('#visual-status').textContent='Ambiental';}
+ try{
+  await ensureAudio();
+  if(!source){analyser=audioCtx.createAnalyser();analyser.fftSize=1024;source=audioCtx.createMediaElementSource(player);source.connect(analyser);analyser.connect(audioCtx.destination);}
+  updateStatus();
+ }catch{micMessage.textContent='No se pudo activar el análisis del reproductor.';}
 });
+player?.addEventListener('pause',updateStatus);
+if(!navigator.mediaDevices?.getUserMedia){micButton.disabled=true;micMessage.textContent='Este navegador no permite acceder al micrófono aquí.';}
+micButton.addEventListener('click',async()=>{
+ if(micPending)return;
+ if(micStream){stopMic();micMessage.textContent='Micrófono apagado.';return;}
+ micPending=true;micButton.disabled=true;micMessage.textContent='Autoriza el micrófono en el aviso del navegador.';
+ try{
+  await ensureAudio();
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+  if(leaving){stream.getTracks().forEach(track=>track.stop());return;}
+  micStream=stream;micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=1024;micAnalyser.smoothingTimeConstant=.65;
+  micSource=audioCtx.createMediaStreamSource(stream);micSource.connect(micAnalyser);
+  // Analysis only: the microphone is never connected to the speakers.
+  stream.getAudioTracks().forEach(track=>track.addEventListener('ended',()=>{stopMic();micMessage.textContent='El micrófono se desconectó.';}));
+  micButton.textContent='Apagar micrófono';micButton.setAttribute('aria-pressed','true');
+  micMessage.textContent='Micrófono activo · análisis local, sin grabar ni reproducir tu voz.';updateStatus();
+ }catch(error){
+  stopMic();
+  micMessage.textContent=error.name==='NotAllowedError'?'Permiso denegado. Habilita el micrófono en los permisos del navegador y vuelve a intentar.':error.name==='NotFoundError'?'No se encontró un micrófono conectado.':'No se pudo abrir el micrófono. Revisa que esté disponible y vuelve a intentar.';
+ }finally{micPending=false;micButton.disabled=false;}
+});
+addEventListener('pagehide',()=>{leaving=true;stopMic();});
+addEventListener('pageshow',()=>{leaving=false;});
 let paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const toggle=document.querySelector('#visual-toggle');
 function label(){toggle.textContent=paused?'Activar movimiento':'Pausar movimiento';toggle.setAttribute('aria-pressed',String(!paused));}label();
 toggle.addEventListener('click',()=>{paused=!paused;label();});
 let previous=0;let lost=false;const started=performance.now();
-canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;canvas.hidden=true;});
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;canvas.hidden=true;stopMic();});
 const bands=[.4,.6,.3,.7],knobs=[.3,.5,.2,.6];
 const spectrum=new Float32Array(48);
 function draw(ms){
  requestAnimationFrame(draw);
  if(lost||document.hidden||ms-previous<33||(paused&&previous))return;
  previous=ms;resize();const now=(ms-started)/1000;
- const active=analyser&&player&&!player.paused;
- if(active)analyser.getByteFrequencyData(data);
+ const activeAnalyser=micStream?micAnalyser:(player&&!player.paused?analyser:null);
+ const active=!!activeAnalyser;
+ if(active)activeAnalyser.getByteFrequencyData(data);
  for(let i=0;i<4;i++){
   let energy=.24+.52*Math.pow(.5+.5*Math.sin(now*(1.3+i*.37)+i),3);
   if(active){const ranges=[[1,8],[8,80],[80,350],[1,400]][i];let sum=0;for(let n=ranges[0];n<ranges[1];n++)sum+=data[n]||0;energy=sum/(ranges[1]-ranges[0])/180;}
@@ -191,7 +234,7 @@ function draw(ms){
    }
    spectrum[i]=spectrum[i]*.72+value*.28;
  }
- document.querySelector('#visual-status').textContent=active?'Vúmetro · siguiendo tu música':'Ambiente · sin audio';
+ updateStatus();
  gl.bindTexture(gl.TEXTURE_2D,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.viewport(0,0,rw,rh);gl.useProgram(pScene);
  gl.uniform2f(US.scene.res,rw,rh);gl.uniform1f(US.scene.time,now);gl.uniform4fv(US.scene.bands,bands);gl.uniform4fv(US.scene.knobs,knobs);gl.uniform1fv(US.scene.spectrum,spectrum);
  gl.uniform1f(US.scene.reflect,params.reflect);gl.uniform1f(US.scene.hue,params.huespeed);gl.uniform1f(US.scene.emission,params.emission);gl.uniform1f(US.scene.atmos,params.atmos);gl.drawArrays(gl.TRIANGLES,0,3);
