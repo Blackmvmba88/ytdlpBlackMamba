@@ -1,6 +1,6 @@
 # MambaFlow · Emission
 
-Busca una canción o artista en YouTube, guarda MP3 o video y escucha tu colección con un visualizador que reacciona al audio. Interfaz local en español, basada en el Emission Engine de BlackMamba: shaders de emisión, bloom y reflejos con una paleta rosa, violeta y cian.
+Busca una canción o artista en YouTube, guarda MP3 o video y escucha tu colección con un visualizador que reacciona al audio. Fondo inmersivo de color con vúmetro de 48 bandas. Interfaz local en español, basada en el Emission Engine de BlackMamba: shaders de emisión, bloom y reflejos con una paleta rosa, violeta y cian.
 
 ![MambaFlow](docs/desktop.png)
 
