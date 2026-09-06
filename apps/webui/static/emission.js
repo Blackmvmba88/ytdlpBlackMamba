@@ -188,11 +188,12 @@ if(!navigator.mediaDevices?.getUserMedia){micButton.disabled=true;micMessage.tex
 async function startMic(){
  if(micPending)return;
  if(micStream){stopMic();micMessage.textContent='Micrófono apagado.';return;}
- micPending=true;micButton.disabled=true;micMessage.textContent='Autoriza el micrófono en el aviso del navegador.';
+ micPending=true;micButton.disabled=true;micMessage.textContent='Solicitando permiso del micrófono…';
  try{
-  await ensureAudio();
-  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+  const permission=navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+  const stream=await Promise.race([permission,new Promise((_,reject)=>setTimeout(()=>reject(new DOMException('Mic timeout','AbortError')),12000))]);
   if(leaving){stream.getTracks().forEach(track=>track.stop());return;}
+  await ensureAudio();
   micStream=stream;micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=1024;micAnalyser.smoothingTimeConstant=.65;
   micSource=audioCtx.createMediaStreamSource(stream);micSource.connect(micAnalyser);
   // Analysis only: the microphone is never connected to the speakers.
@@ -201,7 +202,7 @@ async function startMic(){
   micMessage.textContent='Micrófono activo · análisis local, sin grabar ni reproducir tu voz.';updateStatus();
  }catch(error){
   stopMic();
-  micMessage.textContent=error.name==='NotAllowedError'?'Permiso denegado. Habilita el micrófono en los permisos del navegador y vuelve a intentar.':error.name==='NotFoundError'?'No se encontró un micrófono conectado.':'No se pudo abrir el micrófono. Revisa que esté disponible y vuelve a intentar.';
+  micMessage.textContent=error.name==='NotAllowedError'?'Permiso denegado. Habilita el micrófono en los permisos del navegador y vuelve a intentar.':error.name==='NotFoundError'?'No se encontró un micrófono conectado.':error.name==='AbortError'?'El permiso tardó demasiado. Pulsa Activar micrófono para reintentarlo.':'No se pudo abrir el micrófono. Revisa que esté disponible y vuelve a intentar.';
  }finally{micPending=false;micButton.disabled=false;}
 }
 micButton.addEventListener('click',()=>{ if(micStream) stopMic(); else startMic(); });
